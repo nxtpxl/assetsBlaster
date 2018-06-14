@@ -1,11 +1,5 @@
 '''
 WIP WIP WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP
-
-WIP WIP WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP
-
-WIP WIP WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP
-
-WIP WIP WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP  WIP
 '''
 
 import maya.cmds as cmds
@@ -38,9 +32,15 @@ from NXTPXL import projectsDir as projectsDir
 from NXTPXL import filePathFixed
 from NXTPXL import currentProjectUsersDir as currentProjectUsersDir
 
-
-
 class assBlaster():
+    
+    # class variable 
+    # will get over written by project resoultion only to be used for render done off project
+    renderResolution = [1920, 1080]
+    
+    # instalce variable
+    self.render_Resolution = [2120, 1120]
+    
     def __init__(self):
         # for local use only
         path = BLUI
@@ -55,7 +55,11 @@ class assBlaster():
         self.btn05_icon = os.path.join(path, 'toggle_BG_color.jpg')
         self.btn06_icon = os.path.join(path, 'Render_playblast.jpg')
 
-        # for network use only
+    @classmethod
+    def setRenderResolution(cls, resolution):
+        cls.renderResolution = resolution   
+ 
+    # for network use only
     def toggleResGate(self, *args):
         currentPanel=str(pm.getPanel(withFocus=1))
         currentCam=str(pm.modelPanel(currentPanel, q=1, cam=1))
@@ -80,15 +84,9 @@ class assBlaster():
         else:
             cmds.modelEditor(currentPanel, imagePlane=True, e=1)
             pm.optionVar(iv=("ImagePlane", 1))
-    def cam_loader(self):
-        cameras = cmds.ls(cameras = 1)
-        transforms = cmds.listRelatives(cameras, parent=1)
-        #transforms.remove('persp')
-        transforms.remove('side')
-        transforms.remove('top')
-        transforms.remove('front')
-        return transforms
-    def cam_loader(self):
+    
+    @staticmethod
+    def cam_loader():
         cameras = cmds.ls(cameras = 1)
         transforms = cmds.listRelatives(cameras, parent=1)
         #transforms.remove('persp')
@@ -97,7 +95,8 @@ class assBlaster():
         transforms.remove('front')
         return transforms
 
-    def getCamera(self, *args):
+    @staticmethod
+    def getCamera(*args):
         view = OpenMayaUI.M3dView.active3dView()
         cam = OpenMaya.MDagPath()
         view.getCamera(cam)
@@ -120,8 +119,8 @@ class assBlaster():
             cmds.intField( self.firstFrame, edit = True, value =  0)
             cmds.intField( self.lastFrame, edit = True, value =  0)
 
-
-    def hideAllButGeo(self, *args):
+    @staticmethod
+    def hideAllButGeo(*args):
         """show only geometry"""
         currentCam = ""
         if pm.mel.getApplicationVersionAsFloat()<=2008:
@@ -143,7 +142,8 @@ class assBlaster():
             # show nurbssurfaces
             pm.modelEditor(currentCam, e=1, nurbsSurfaces=True)
 
-    def toggleWireframe(self, *args):
+    @staticmethod        
+    def toggleWireframe(*args):
         currentCam = ""
         currentCam=str(pm.playblast(ae=1))
         wireFrameOn=int(pm.modelEditor(currentCam, q=1, wos=1))
@@ -154,7 +154,8 @@ class assBlaster():
             pm.mel.setWireframeOnShadedOption(True, currentCam)
             pm.modelEditor(currentCam, e=1, smoothWireframe=True)
 
-    def toggleWireframeViewport_currentval(self, status):
+    @staticmethod        
+    def toggleWireframeViewport_currentval(status):
         currentCam = ""
         currentCam=str(pm.playblast(ae=1))
         wireFrameOn=int(pm.modelEditor(currentCam, q=1, wos=1))
@@ -171,7 +172,8 @@ class assBlaster():
             # turn the smoothing off as well
             pm.modelEditor(currentCam, e=1, smoothWireframe=False)
 
-    def defMatValue(self, status):
+    @staticmethod        
+    def defMatValue(status):
         currentCam = ""
         currentCam=str(pm.playblast(ae=1))
         def_Material=int(pm.modelEditor(currentCam, q=1, udm=True))
@@ -182,7 +184,8 @@ class assBlaster():
             print 'turn it off'
             pm.modelEditor(currentCam, e=1, useDefaultMaterial=False)
 
-    def defHardwareFogValue(self, status):
+    @staticmethod        
+    def defHardwareFogValue(status):
         currentCam = ""
         currentCam=str(pm.playblast(ae=1))
         def_Material=int(pm.modelEditor(currentCam, q=1, udm=1))
@@ -195,7 +198,8 @@ class assBlaster():
             mel.eval('modelEditor -e -fogging false %s;'%currentCam)
             pm.modelEditor(currentCam, e=1, fogging=False)
 
-    def toggleDefMaterial(self, *args):
+    @staticmethod        
+    def toggleDefMaterial(*args):
         currentCam = ""
         currentCam=str(pm.playblast(ae=1))
         chkStatus = pm.modelEditor(currentCam, q=True, useDefaultMaterial=True)
@@ -204,8 +208,9 @@ class assBlaster():
             pm.modelEditor(currentCam, e=1, useDefaultMaterial=True)
         else:
             pm.modelEditor(currentCam, e=1, useDefaultMaterial=False)
-
-    def queryFogDistance(self, *args):
+    
+    @staticmethod
+    def queryFogDistance(*args):
         distance = mel.eval('getAttr "hardwareRenderingGlobals.hwFogEnd";')
         return distance
 
@@ -213,10 +218,12 @@ class assBlaster():
         dis =int(self.queryFogDistance())
         dis = float(dis - 100)
         mel.eval('setAttr "hardwareRenderingGlobals.hwFogEnd" %f;'%dis)
+    
     def increaseFog(self, *args):
         dis =int(self.queryFogDistance())
         dis = float(dis + 100)
         mel.eval('setAttr "hardwareRenderingGlobals.hwFogEnd" %f;'%dis)
+    
     def changeFogColor(self, *args):
         result = cmds.colorEditor()
         buffer = result.split()
